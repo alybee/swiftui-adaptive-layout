@@ -11,20 +11,37 @@
 | `DeviceHinge` (`status`: `.closed` / `.partiallyOpen` / `.fullyOpen`, `angle`), `DeviceHingeContext` | **iOS 27.1 SDK** | pose-dependent behaviour |
 | `@Environment(\.toolbarVerticalEdge)` | **iOS 27.1 SDK** | which edge holds the system's vertical bar (`nil` where there is none) |
 | UIKit `reservedRegionsOfKind:` / `reservedRegions(kind:options:)` | iOS 27.1 SDK | UIKit counterpart; no change notification, read from `layoutSubviews` |
+| `contentMargins(_:_:for:)` | iOS 17 | readable column in a `List`/`Form` that keeps the whole width scrolling; counts from the **screen edge**, so add each side's safe-area inset (pattern 12) |
+| `NavigationSplitView` | iOS 16 | master/detail in regular width only; collapsed inside a pushed screen it renders empty (pattern 16) |
+| `navigationSplitViewColumnWidth(_:)` / `(min:ideal:max:)` | iOS 16 | ignored on an iPad Air 11" in portrait with the 27.1 RC: do not rely on it |
+| `toolbar(removing: .sidebarToggle)` | iOS 17 | drops the button that hides the sidebar column |
+| `@Environment(\.horizontalSizeClass)` | iOS 14 | `.regular` ⇒ two columns; with the vertical class, the only size-class decision this skill makes |
+| `UIViewRepresentable` + `didMoveToWindow` → `window?.windowScene` | any | the scene of the view that shows the app, for an overlay window (pattern 17) |
 
-SwiftUI exposes the fold directly from the 27.1 SDK: no hidden `UIViewRepresentable` probe is needed.
+SwiftUI exposes the fold directly from the 27.1 SDK: no `UIViewRepresentable` probe is needed for it.
+A representable is still the way to learn which `UIWindowScene` shows a view (pattern 17).
+
+## Swift 6 isolation and `onGeometryChange`
+
+The value you measure must be `Sendable`. In a module built with `SWIFT_DEFAULT_ACTOR_ISOLATION =
+MainActor` (the default for new targets since Xcode 26), a plain `struct` is main-actor isolated and
+the compiler refuses it: "main actor-isolated conformance … cannot satisfy conformance requirement
+for a 'Sendable' type parameter". Declare measured value types `nonisolated struct Foo: Equatable,
+Sendable`; an optional of it works too (`for: FoldGeometry?.self`). Scalars (`CGFloat`) need nothing.
 
 ## The SDK-gating trap
 
-`#available(iOS 27.1, *)` is a **runtime** check. It does not help when the code must still compile
-with an older SDK — for example when releases are archived with the stable Xcode while the 27.1 SDK is
-only in beta. Both Xcodes can ship the **same Swift compiler**, so `#if compiler(>=…)` cannot tell them
-apart.
+`#available(iOS 27.1, *)` is a **runtime** check: it does not let the code compile with an older SDK.
+Two Xcodes can ship the same Swift compiler, so `#if compiler(>=…)` cannot tell them apart either;
+`#if canImport(SwiftUICore, _version: …)` can, but `_version` is unofficial and moves between builds.
 
-`#if canImport(SwiftUICore, _version: <x.y.z>)` can (the module's `user-module-version` differs between
-SDKs), but `_version` is unofficial and the number can move between beta and release. Prefer deferring
-the work until the shipping Xcode carries the SDK, and leave the grid on its tested behaviour until
-then. If the fold is never reported, the layout must fall back to the behaviour it had without it.
+So: build and archive with an Xcode that carries the API, or defer the work and leave the layout on its
+tested behaviour. Once the API is used, `#available` inside the measuring code is the only guard left,
+and the project no longer builds with an older Xcode. If the fold is never reported, the layout must
+fall back to the behaviour it had without it.
+
+After switching Xcode, build from a fresh derived-data folder: precompiled modules keep the old
+Xcode's path and fail with "malformed or corrupted precompiled file".
 
 ## Inset rules worth repeating
 
@@ -32,3 +49,6 @@ then. If the fold is never reported, the layout must fall back to the behaviour 
 - Inside `.ignoresSafeArea`, proxies report 0: measure outside it.
 - `safeAreaPadding(.top)` consumes the inset for the views inside it.
 - Never read insets from `UIApplication`, a `UIWindowScene` found by enumeration, or `keyWindow`.
+- `contentMargins` count from the screen edge, not from the safe area: add the inset of each side.
+- With a navigation bar, the top inset is the bar's height (82 pt measured on the unfolded Duo); the
+  side status column adds nothing at the top. Bar-less screens get ~0 (pattern 7).

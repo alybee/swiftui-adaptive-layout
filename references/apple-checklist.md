@@ -3,9 +3,12 @@
 Apple ships an authoritative skill for the API side of resizing, in Xcode 27.1 and later:
 
 ```bash
-DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer \
+# Xcode 27.1 or later
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
   xcrun agent skills export --output-dir ~/.claude/skills
 ```
+
+A later export overwrites Apple's skill: keep your own notes in this skill, never in theirs.
 
 Use it when you can: it is maintained with each Xcode release. What follows is a short summary in our
 own words, so an audit is not blind without it. Sources: Apple's *Prepare your app for iPhone Duo*
@@ -34,6 +37,9 @@ Read every source of build settings (project file and `.xcconfig`s) before repor
       combination can occur on any device; `.regular` width is not "iPad". No hard-coded device sizes.
 - [ ] **Scene lifecycle.** Window and UI setup lives in a scene delegate (or a SwiftUI `App`), not in
       `UIApplicationDelegate`.
+- [ ] **No `connectedScenes.first` to create a window.** An overlay window takes the scene of the view
+      that shows the app (`patterns.md` §17); on a two-display device the first scene may be the
+      other display.
 - [ ] **Size re-read on every change**, not once: `layoutSubviews` / `viewDidLayoutSubviews` /
       `viewWillTransition(to:with:)` in UIKit; SwiftUI re-evaluates on its own.
 - [ ] **Safe areas are asymmetric and change at runtime.** No `topLayoutGuide`/`bottomLayoutGuide`; no

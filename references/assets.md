@@ -8,7 +8,7 @@ upscale it until only a strip shows, or leave bars beside it. Ask the designer f
 - **Format**: vector PDF with *Preserve Vector Data* (one file, any size), or PNG @2x / @3x.
 - **Size**: band height × the widest width to cover, plus margin. For a 250 pt band up to an iPad Pro
   13" in landscape (1376 pt): **1400 × 250 pt** (5.6:1).
-- **Widths it must work at** (same height): Duo unfolded ~780 pt (~3:1), iPad portrait 744–1032 pt
+- **Widths it must work at** (same height): Duo unfolded ~950 pt (~3.8:1), iPad portrait 744–1032 pt
   (3–4:1), iPad landscape up to 1376 pt (5.5:1). Phones and the folded Duo keep the phone artwork.
 - **Safe zone**: the image fills the band's height and is anchored to one side, so a narrow screen sees
   only that side. Put the key elements in the ~700 pt nearest the anchor; the far side extends simply
